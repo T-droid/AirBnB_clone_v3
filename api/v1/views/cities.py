@@ -4,35 +4,41 @@ from flask import jsonify, abort, request
 from api.v1.views import app_views
 from models import storage
 from models.state import State
+from models.city import City
 
-@app_views.route("/api/v1/states", methods=["GET"])
-def state_list():
-    """retrieves the list of all state objects"""
-    states = storage.all(State).values()
-    new_list = [state.to_dict() for state in states]
-    return jsonify(new_list)
-
-@app_views.route("/api/v1/states/<state_id>", methods=["GET"])
-def state_with_id(state_id):
-    """retrieves states based on id"""
+@app_views.route("/api/v1/states<state_id>/cities", methods=["GET"])
+def city_state_list(state_id):
+    """retrieves the list of all city state objects"""
     state = State.query.get(state_id)
     if state:
-        return jsonify(state.to_dict())
+        cities = state.cities()
+        new_list = [city.to_dict() for city in cities]
+        return jsonify(new_list)
     else:
         abort(404)
 
-@app_views.route("/api/v1/states/<state_id>")
-def delete_state(state_id):
-    """deletes state based on its id"""
-    state = State.query.get(state_id)
 
-    if state:
-        storage.delete(state)
+@app_views.route("/api/v1/cities/<city_id>", methods=["GET"])
+def city_with_id(city_id):
+    """retrieves states based on id"""
+    city = City.query.get(city_id)
+    if city:
+        return jsonify(city.to_dict())
+    else:
+        abort(404)
+
+@app_views.route("/api/v1/cities/<city_id>")
+def delete_city(city_id):
+    """deletes city based on its id"""
+    city = City.query.get(city_id)
+
+    if city:
+        storage.delete(city)
         return jsonify({}), 200
     else:
         abort(404)
 
-@app_views.route("/api/v1/states", methods=["POST"])
+@app_views.route("/api/v1/cities", methods=["POST"])
 def create_new_state():
     """creates a new state from user"""
     data = request.get_json()
@@ -42,24 +48,24 @@ def create_new_state():
     if 'name' not in list(data.keys()):
         abort(400, "Missing name")
 
-    new_state = State(**data)
-    new_state.save()
-    return jsonify(new_state.to_dict()), 201
+    new_city = State(**data)
+    new_city.save()
+    return jsonify(new_city.to_dict()), 201
 
-@app_views.route("PUT /api/v1/states/<state_id>", methods=["PUT"])
-def update_state(state_id):
+@app_views.route("PUT /api/v1/cities/<city_id>", methods=["PUT"])
+def update_state(city_id):
     """updates states bases on state id"""
-    state = State.query.get(state_id)
-    if state:
+    city = City.query.get(city_id)
+    if city:
         if not request.get.json():
             abort(400, 'Not a JSON')
         data = request.get_json()
         ignore_keys = ['id', 'created_at', 'updated_at']
         for key, value in data.items():
             if key not in ignore_keys:
-                setattr(state, key, value)
-        state.save()
-        return jsonify(state.to_dict()), 200
+                setattr(city, key, value)
+        city.save()
+        return jsonify(city.to_dict()), 200
     else:
         abort(404)
 
